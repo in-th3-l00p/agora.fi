@@ -40,6 +40,10 @@ When a tile is sold, the buyer receives the NFT **and** the entire tile wallet �
 |----------|--------|---------|
 | [ERC-6551](https://eips.ethereum.org/EIPS/eip-6551) | Draft | Token Bound Accounts — once finalized, the tile wallet may be migrated to this standard for ecosystem interoperability |
 
+## MVP
+
+* [MVP — ERC-721 only](./mvp.md) — minimal first version with just tile ownership, no wallets or DeFi features
+
 ## navigation
 
 * [tile NFT (ERC-721)](./tile-nft.md)
