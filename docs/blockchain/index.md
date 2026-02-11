@@ -6,13 +6,13 @@ agora.fi's on-chain infrastructure turns NFT tiles into autonomous, income-gener
 
 ## core standards
 
-| Standard | Role | Section |
-|----------|------|---------|
-| ERC-721 | Tile ownership | [tile NFT](./tile-nft.md) |
-| ERC-6551 | Per-tile smart wallet | [token-bound accounts](./token-bound-accounts.md) |
-| ERC-4626 | Yield & staking | [vaults](./vaults.md) |
-| ERC-4907 | Time-limited rentals | [rentals](./rentals.md) |
-| ERC-2981 | On-sale royalties | [royalties](./royalties.md) |
+| Standard | Role | Spec | Section |
+|----------|------|------|---------|
+| [ERC-721](https://eips.ethereum.org/EIPS/eip-721) | Tile ownership | [EIP-721](https://eips.ethereum.org/EIPS/eip-721) | [tile NFT](./tile-nft.md) |
+| [ERC-6551](https://eips.ethereum.org/EIPS/eip-6551) | Per-tile smart wallet | [EIP-6551](https://eips.ethereum.org/EIPS/eip-6551) | [token-bound accounts](./token-bound-accounts.md) |
+| [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) | Yield & staking | [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) | [vaults](./vaults.md) |
+| [ERC-4907](https://eips.ethereum.org/EIPS/eip-4907) | Time-limited rentals | [EIP-4907](https://eips.ethereum.org/EIPS/eip-4907) | [rentals](./rentals.md) |
+| [ERC-2981](https://eips.ethereum.org/EIPS/eip-2981) | On-sale royalties | [EIP-2981](https://eips.ethereum.org/EIPS/eip-2981) | [royalties](./royalties.md) |
 
 ## economics
 
