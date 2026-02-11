@@ -3,14 +3,14 @@
 import { useCallback, useMemo } from "react";
 import { type Address } from "viem";
 import { useWeb3 } from "./useWeb3";
-import { TileService } from "@/lib/web3/services";
+import { TileService } from "../services";
 
-export function useTile() {
+export function useTile(contractAddress: Address) {
   const { publicClient, walletClient } = useWeb3();
 
   const service = useMemo(
-    () => new TileService(publicClient, walletClient ?? undefined),
-    [publicClient, walletClient],
+    () => new TileService(contractAddress, publicClient, walletClient ?? undefined),
+    [contractAddress, publicClient, walletClient],
   );
 
   const getSpaceInfo = useCallback(

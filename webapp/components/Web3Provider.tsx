@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  createContext,
   useEffect,
   useMemo,
   useState,
@@ -16,16 +15,9 @@ import {
   type Address,
 } from "viem";
 import { useWallets } from "@privy-io/react-auth";
-import { chain, transport } from "./chain";
-
-export interface Web3ContextValue {
-  publicClient: PublicClient;
-  walletClient: WalletClient | null;
-  isConnected: boolean;
-  address: Address | null;
-}
-
-export const Web3Context = createContext<Web3ContextValue | null>(null);
+import { Web3Context } from "@agora.fi/web3/react";
+import type { Web3ContextValue } from "@agora.fi/web3/react";
+import { chain, transport } from "@/lib/chain";
 
 export function Web3Provider({ children }: { children: ReactNode }) {
   const { wallets, ready } = useWallets();

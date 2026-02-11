@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { type Address } from "viem";
 import { useWeb3 } from "./useWeb3";
-import { TokenService } from "@/lib/web3/services";
+import { TokenService } from "../services";
 
 export function useSpaceToken(tokenAddress: Address) {
   const { publicClient, walletClient } = useWeb3();

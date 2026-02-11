@@ -9,10 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FEATURES } from "@/lib/mock-data";
-import { useWeb3 } from "@/hooks/useWeb3";
-import { useSpaceFactory } from "@/hooks/useSpaceFactory";
-import { useTile } from "@/hooks/useTile";
-import type { SpaceInfo } from "@/lib/web3/types";
+import { useWeb3, useSpaceFactory, useTile } from "@agora.fi/web3/react";
+import type { SpaceInfo } from "@agora.fi/web3";
+import { AGORA_TILE_ADDRESS, SPACE_FACTORY_ADDRESS } from "@/lib/addresses";
 import {
   Blocks,
   Wallet,
@@ -43,8 +42,8 @@ interface OnChainSpace {
 export default function Home() {
   const { login, ready, authenticated } = usePrivy();
   const router = useRouter();
-  const { spaceCount, spaceIdByIndex, getSpaceInfo } = useSpaceFactory();
-  const { totalSupply: tileTotalSupply } = useTile();
+  const { spaceCount, spaceIdByIndex, getSpaceInfo } = useSpaceFactory(SPACE_FACTORY_ADDRESS);
+  const { totalSupply: tileTotalSupply } = useTile(AGORA_TILE_ADDRESS);
   const { address } = useWeb3();
 
   const [spaces, setSpaces] = useState<OnChainSpace[]>([]);

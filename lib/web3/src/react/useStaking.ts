@@ -3,8 +3,8 @@
 import { useCallback, useMemo } from "react";
 import { type Address } from "viem";
 import { useWeb3 } from "./useWeb3";
-import { StakingService } from "@/lib/web3/services";
-import type { LockPeriod } from "@/lib/web3/types";
+import { StakingService } from "../services";
+import type { LockPeriod } from "../types";
 
 export function useStaking(stakingAddress: Address) {
   const { publicClient, walletClient } = useWeb3();

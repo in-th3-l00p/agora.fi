@@ -1,16 +1,17 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { type Address } from "viem";
 import { useWeb3 } from "./useWeb3";
-import { FactoryService } from "@/lib/web3/services";
-import type { TokenAllocation } from "@/lib/web3/types";
+import { FactoryService } from "../services";
+import type { TokenAllocation } from "../types";
 
-export function useSpaceFactory() {
+export function useSpaceFactory(contractAddress: Address) {
   const { publicClient, walletClient } = useWeb3();
 
   const service = useMemo(
-    () => new FactoryService(publicClient, walletClient ?? undefined),
-    [publicClient, walletClient],
+    () => new FactoryService(contractAddress, publicClient, walletClient ?? undefined),
+    [contractAddress, publicClient, walletClient],
   );
 
   const getSpaceInfo = useCallback(

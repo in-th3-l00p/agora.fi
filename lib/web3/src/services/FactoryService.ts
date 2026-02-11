@@ -1,21 +1,17 @@
 import { type PublicClient, type WalletClient, type Address } from "viem";
 import { spaceFactoryAbi } from "../abis";
-import { SPACE_FACTORY_ADDRESS } from "../addresses";
 import type { SpaceInfo, TokenAllocation } from "../types";
 
 export class FactoryService {
   constructor(
+    private contractAddress: Address,
     private publicClient: PublicClient,
     private walletClient?: WalletClient,
   ) {}
 
-  private get address(): Address {
-    return SPACE_FACTORY_ADDRESS;
-  }
-
   async getSpaceInfo(spaceId: bigint): Promise<SpaceInfo> {
     const [token, creator, mintPrice] = await this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: spaceFactoryAbi,
       functionName: "spaceInfo",
       args: [spaceId],
@@ -25,7 +21,7 @@ export class FactoryService {
 
   async spaceCount(): Promise<bigint> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: spaceFactoryAbi,
       functionName: "spaceCount",
     });
@@ -33,7 +29,7 @@ export class FactoryService {
 
   async tokenOf(spaceId: bigint): Promise<Address> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: spaceFactoryAbi,
       functionName: "tokenOf",
       args: [spaceId],
@@ -42,7 +38,7 @@ export class FactoryService {
 
   async spaceIdByIndex(index: bigint): Promise<bigint> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: spaceFactoryAbi,
       functionName: "spaceIds",
       args: [index],
@@ -59,7 +55,7 @@ export class FactoryService {
   ): Promise<`0x${string}`> {
     if (!this.walletClient?.account) throw new Error("Wallet not connected");
     return this.walletClient.writeContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: spaceFactoryAbi,
       functionName: "createSpace",
       args: [spaceId, name, symbol, mintPrice, totalSupply, alloc],

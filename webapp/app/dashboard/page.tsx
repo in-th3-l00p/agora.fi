@@ -27,10 +27,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useWeb3 } from "@/hooks/useWeb3";
-import { useSpaceFactory } from "@/hooks/useSpaceFactory";
-import { useTile } from "@/hooks/useTile";
-import type { SpaceInfo, TokenAllocation } from "@/lib/web3/types";
+import { useWeb3, useSpaceFactory, useTile } from "@agora.fi/web3/react";
+import type { SpaceInfo, TokenAllocation } from "@agora.fi/web3";
+import { AGORA_TILE_ADDRESS, SPACE_FACTORY_ADDRESS } from "@/lib/addresses";
 import {
   Plus,
   Grid3X3,
@@ -52,7 +51,7 @@ interface OnChainSpace {
 
 function CreateSpaceDialog({ onCreated }: { onCreated: () => void }) {
   const { address } = useWeb3();
-  const { createSpace } = useSpaceFactory();
+  const { createSpace } = useSpaceFactory(SPACE_FACTORY_ADDRESS);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -240,8 +239,8 @@ function SpaceCard({ space }: { space: OnChainSpace }) {
 function DashboardContent() {
   const { user, logout } = usePrivy();
   const { address } = useWeb3();
-  const { spaceCount, spaceIdByIndex, getSpaceInfo } = useSpaceFactory();
-  const { totalSupply: tileTotalSupply } = useTile();
+  const { spaceCount, spaceIdByIndex, getSpaceInfo } = useSpaceFactory(SPACE_FACTORY_ADDRESS);
+  const { totalSupply: tileTotalSupply } = useTile(AGORA_TILE_ADDRESS);
 
   const [allSpaces, setAllSpaces] = useState<OnChainSpace[]>([]);
   const [totalTiles, setTotalTiles] = useState(0n);

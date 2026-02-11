@@ -1,21 +1,17 @@
 import { type PublicClient, type WalletClient, type Address } from "viem";
 import { agoraTileAbi } from "../abis";
-import { AGORA_TILE_ADDRESS } from "../addresses";
 import type { TileInfo } from "../types";
 
 export class TileService {
   constructor(
+    private contractAddress: Address,
     private publicClient: PublicClient,
     private walletClient?: WalletClient,
   ) {}
 
-  private get address(): Address {
-    return AGORA_TILE_ADDRESS;
-  }
-
   async getSpaceInfo(spaceId: bigint): Promise<{ mintPrice: bigint; exists: boolean }> {
     const [mintPrice, exists] = await this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "spaces",
       args: [spaceId],
@@ -25,7 +21,7 @@ export class TileService {
 
   async getTileInfo(tokenId: bigint): Promise<TileInfo> {
     const [spaceId, x, y, tier] = await this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "tiles",
       args: [tokenId],
@@ -35,7 +31,7 @@ export class TileService {
 
   async ownerOf(tokenId: bigint): Promise<Address> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "ownerOf",
       args: [tokenId],
@@ -44,7 +40,7 @@ export class TileService {
 
   async tileId(spaceId: bigint, x: number, y: number): Promise<bigint> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "tileId",
       args: [spaceId, x, y],
@@ -53,7 +49,7 @@ export class TileService {
 
   async balanceOf(owner: Address): Promise<bigint> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "balanceOf",
       args: [owner],
@@ -62,7 +58,7 @@ export class TileService {
 
   async tokenOfOwnerByIndex(owner: Address, index: bigint): Promise<bigint> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "tokenOfOwnerByIndex",
       args: [owner, index],
@@ -80,7 +76,7 @@ export class TileService {
 
   async totalSupply(): Promise<bigint> {
     return this.publicClient.readContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "totalSupply",
     });
@@ -89,7 +85,7 @@ export class TileService {
   async mint(spaceId: bigint, x: number, y: number, value: bigint): Promise<`0x${string}`> {
     if (!this.walletClient?.account) throw new Error("Wallet not connected");
     return this.walletClient.writeContract({
-      address: this.address,
+      address: this.contractAddress,
       abi: agoraTileAbi,
       functionName: "mint",
       args: [spaceId, x, y],
