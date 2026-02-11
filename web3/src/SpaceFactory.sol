@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
 import {AgoraTile} from "./AgoraTile.sol";
-import {SpaceToken} from "./SpaceToken.sol";
+import {SpaceTokenDeployer} from "./SpaceTokenDeployer.sol";
 
 /// @title SpaceFactory
 /// @notice Creates AGORAFI Spaces by deploying a governance token and registering
@@ -52,6 +52,7 @@ contract SpaceFactory is Ownable {
     // ── State ───────────────────────────────────────────────────────
 
     AgoraTile public immutable agoraTile;
+    SpaceTokenDeployer public immutable tokenDeployer;
 
     /// @notice spaceId → deployed SpaceToken address
     mapping(uint256 => SpaceInfo) public spaceInfo;
@@ -79,9 +80,11 @@ contract SpaceFactory is Ownable {
 
     // ── Constructor ─────────────────────────────────────────────────
 
-    constructor(address _agoraTile) Ownable(msg.sender) {
+    constructor(address _agoraTile, address _tokenDeployer) Ownable(msg.sender) {
         if (_agoraTile == address(0)) revert ZeroAddress();
+        if (_tokenDeployer == address(0)) revert ZeroAddress();
         agoraTile = AgoraTile(_agoraTile);
+        tokenDeployer = SpaceTokenDeployer(_tokenDeployer);
     }
 
     // ── Public API ──────────────────────────────────────────────────
@@ -109,8 +112,7 @@ contract SpaceFactory is Ownable {
         uint256 supply = totalSupply == 0 ? DEFAULT_TOTAL_SUPPLY : totalSupply;
 
         // Deploy the governance token — entire supply minted to this factory
-        SpaceToken spaceToken = new SpaceToken(name, symbol, spaceId, supply, address(this));
-        token = address(spaceToken);
+        token = tokenDeployer.deploy(name, symbol, spaceId, supply, address(this));
 
         // Distribute tokens using SafeERC20
         IERC20(token).safeTransfer(alloc.treasury,        supply * ALLOC_TREASURY  / 100);

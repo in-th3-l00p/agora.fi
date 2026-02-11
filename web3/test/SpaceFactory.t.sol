@@ -5,10 +5,12 @@ import {Test} from "forge-std/Test.sol";
 import {AgoraTile} from "../src/AgoraTile.sol";
 import {SpaceToken} from "../src/SpaceToken.sol";
 import {SpaceFactory} from "../src/SpaceFactory.sol";
+import {SpaceTokenDeployer} from "../src/SpaceTokenDeployer.sol";
 
 contract SpaceFactoryTest is Test {
     AgoraTile public tile;
     SpaceFactory public factory;
+    SpaceTokenDeployer public tokenDeployer;
 
     address public alice;
     address public bob;
@@ -35,9 +37,10 @@ contract SpaceFactoryTest is Test {
         earlySupporters = makeAddr("earlySupporters");
         platformReserve = makeAddr("platformReserve");
 
-        // Deploy tile and factory
+        // Deploy tile, token deployer, and factory
         tile = new AgoraTile();
-        factory = new SpaceFactory(address(tile));
+        tokenDeployer = new SpaceTokenDeployer();
+        factory = new SpaceFactory(address(tile), address(tokenDeployer));
 
         // Authorize factory on AgoraTile
         tile.setFactory(address(factory));
@@ -193,6 +196,11 @@ contract SpaceFactoryTest is Test {
 
     function test_Constructor_RevertZeroTile() public {
         vm.expectRevert(SpaceFactory.ZeroAddress.selector);
-        new SpaceFactory(address(0));
+        new SpaceFactory(address(0), address(tokenDeployer));
+    }
+
+    function test_Constructor_RevertZeroDeployer() public {
+        vm.expectRevert(SpaceFactory.ZeroAddress.selector);
+        new SpaceFactory(address(tile), address(0));
     }
 }

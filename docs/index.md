@@ -17,6 +17,7 @@ Users purchase **Living Tiles** — NFT properties that own assets, generate yie
 
 ### [web3 architecture](./blockchain/index.md)
   * [tile NFT (ERC-721)](./blockchain/tile-nft.md)
+  * [space governance token (ERC-20)](./blockchain/space-token.md)
   * [tile wallets](./blockchain/tile-wallet.md)
   * [vaults (ERC-4626)](./blockchain/vaults.md)
   * [rentals (ERC-4907)](./blockchain/rentals.md)

@@ -1,0 +1,7 @@
+import { type Address } from "viem";
+
+export const AGORA_TILE_ADDRESS = (process.env.NEXT_PUBLIC_AGORA_TILE_ADDRESS ??
+  "0x5FbDB2315678afecb367f032d93F642f64180aa3") as Address;
+
+export const SPACE_FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SPACE_FACTORY_ADDRESS ??
+  "0x0000000000000000000000000000000000000000") as Address;
