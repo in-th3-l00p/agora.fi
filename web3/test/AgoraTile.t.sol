@@ -39,6 +39,41 @@ contract AgoraTileTest is Test {
         tile.createSpace(SPACE_ID, MINT_PRICE);
     }
 
+    // ── factory ─────────────────────────────────────────────────
+
+    function test_SetFactory() public {
+        address factoryAddr = makeAddr("factory");
+        tile.setFactory(factoryAddr);
+        assertEq(tile.factory(), factoryAddr);
+    }
+
+    function test_SetFactory_RevertNotOwner() public {
+        vm.prank(alice);
+        vm.expectRevert();
+        tile.setFactory(alice);
+    }
+
+    function test_CreateSpace_ViaFactory() public {
+        address factoryAddr = makeAddr("factory");
+        tile.setFactory(factoryAddr);
+
+        vm.prank(factoryAddr);
+        tile.createSpace(SPACE_ID, MINT_PRICE);
+
+        (uint256 price, bool exists) = tile.spaces(SPACE_ID);
+        assertEq(price, MINT_PRICE);
+        assertTrue(exists);
+    }
+
+    function test_CreateSpace_RevertNotOwnerNorFactory() public {
+        address factoryAddr = makeAddr("factory");
+        tile.setFactory(factoryAddr);
+
+        vm.prank(alice);
+        vm.expectRevert(AgoraTile.NotOwnerOrFactory.selector);
+        tile.createSpace(SPACE_ID, MINT_PRICE);
+    }
+
     // ── mint ─────────────────────────────────────────────────────
 
     function test_Mint() public {

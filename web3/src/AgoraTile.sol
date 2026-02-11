@@ -26,17 +26,30 @@ contract AgoraTile is ERC721Enumerable, Ownable {
 
     string private _baseTokenURI;
 
+    /// @notice Authorized factory contract that may also create spaces.
+    address public factory;
+
     error SpaceAlreadyExists(uint256 spaceId);
     error SpaceDoesNotExist(uint256 spaceId);
     error TileAlreadyMinted(uint256 tokenId);
     error IncorrectPayment(uint256 sent, uint256 required);
+    error NotOwnerOrFactory();
 
     event SpaceCreated(uint256 indexed spaceId, uint256 mintPrice);
     event TileMinted(uint256 indexed tokenId, uint256 indexed spaceId, uint16 x, uint16 y, address owner);
+    event FactoryUpdated(address indexed factory);
 
     constructor() ERC721("AgoraTile", "AGORA") Ownable(msg.sender) {}
 
-    function createSpace(uint256 spaceId, uint256 mintPrice) external onlyOwner {
+    /// @notice Set the authorized factory address. Only callable by owner.
+    function setFactory(address _factory) external onlyOwner {
+        factory = _factory;
+        emit FactoryUpdated(_factory);
+    }
+
+    /// @notice Create a new space. Callable by owner or the authorized factory.
+    function createSpace(uint256 spaceId, uint256 mintPrice) external {
+        if (msg.sender != owner() && msg.sender != factory) revert NotOwnerOrFactory();
         if (spaces[spaceId].exists) revert SpaceAlreadyExists(spaceId);
         spaces[spaceId] = Space({mintPrice: mintPrice, exists: true});
         emit SpaceCreated(spaceId, mintPrice);
