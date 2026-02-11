@@ -68,6 +68,7 @@ make dev
 | Command | Description |
 |---------|-------------|
 | `make dev` | Start everything (anvil + deploy + webapp) |
+| `make chain` | Start chain only (anvil + deploy, no webapp) |
 | `make anvil` | Start Anvil local testnet only |
 | `make deploy` | Deploy contracts to local testnet |
 | `make dev-webapp` | Start Next.js dev server only |

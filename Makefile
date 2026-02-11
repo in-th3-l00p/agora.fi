@@ -1,19 +1,43 @@
 # agora.fi — local development orchestration
 # Usage: make dev    (start everything)
+#        make chain  (anvil + deploy, no webapp)
 #        make stop   (stop anvil)
 #        make clean  (wipe local state)
 
 include testnet.conf
 
-.PHONY: dev anvil deploy dev-webapp stop clean
+.PHONY: dev chain anvil _anvil deploy dev-webapp stop clean
 
 # ── Full dev stack ──────────────────────────────────────────────
 
-dev: anvil deploy dev-webapp
+dev: _anvil deploy dev-webapp
+
+# ── Chain only (anvil + deploy, no webapp) ─────────────────────
+
+chain: _anvil deploy
 
 # ── Anvil (local testnet) ──────────────────────────────────────
 
+# Foreground — keeps the terminal open with anvil output
 anvil:
+	@mkdir -p $(STATE_DIR)
+	@LOAD_FLAG=""; \
+	if [ -f $(STATE_FILE) ]; then \
+		LOAD_FLAG="--load-state $(STATE_FILE)"; \
+		echo "Loading persisted state from $(STATE_FILE)"; \
+	fi; \
+	anvil \
+		--mnemonic "$(MNEMONIC)" \
+		--chain-id $(CHAIN_ID) \
+		--port $(PORT) \
+		--block-time $(BLOCK_TIME) \
+		--accounts $(ACCOUNTS) \
+		--balance $(BALANCE) \
+		--dump-state $(STATE_FILE) \
+		$$LOAD_FLAG
+
+# Background — used internally by dev/chain targets
+_anvil:
 	@mkdir -p $(STATE_DIR)
 	@if [ -f $(STATE_DIR)/anvil.pid ] && kill -0 $$(cat $(STATE_DIR)/anvil.pid) 2>/dev/null; then \
 		echo "anvil already running (PID $$(cat $(STATE_DIR)/anvil.pid))"; \
