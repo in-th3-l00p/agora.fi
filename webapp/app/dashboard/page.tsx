@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import { parseEther, formatEther, type Address } from "viem";
 import { AuthGuard } from "@/components/auth-guard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,16 +25,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PLATFORM_SPACES, type Space } from "@/lib/mock-data";
+import { useWeb3 } from "@/hooks/useWeb3";
+import { useSpaceFactory } from "@/hooks/useSpaceFactory";
+import { useTile } from "@/hooks/useTile";
+import type { SpaceInfo, TokenAllocation } from "@/lib/web3/types";
 import {
   Plus,
   Grid3X3,
@@ -45,81 +42,61 @@ import {
   Globe,
   Settings,
   Eye,
+  Loader2,
 } from "lucide-react";
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "live")
-    return (
-      <Badge className="bg-matrix/20 text-matrix border-matrix/30">Live</Badge>
-    );
-  if (status === "launching")
-    return (
-      <Badge className="bg-laser/20 text-laser border-laser/30">
-        Launching
-      </Badge>
-    );
-  return (
-    <Badge className="bg-quantum/20 text-quantum border-quantum/30">
-      Upcoming
-    </Badge>
-  );
+interface OnChainSpace {
+  spaceId: bigint;
+  info: SpaceInfo;
 }
 
-const CATEGORIES = [
-  "Startup Ecosystem",
-  "DeFi",
-  "Gaming",
-  "Creators",
-  "Geographic",
-  "Research",
-  "DAO",
-  "Education",
-];
-
-const GRID_SIZES = [
-  { label: "Small (10x10 — 100 tiles)", value: "100" },
-  { label: "Medium (20x20 — 400 tiles)", value: "400" },
-  { label: "Large (30x30 — 900 tiles)", value: "900" },
-  { label: "XL (50x50 — 2,500 tiles)", value: "2500" },
-];
-
-function CreateSpaceDialog({
-  onCreateSpace,
-}: {
-  onCreateSpace: (space: Space) => void;
-}) {
+function CreateSpaceDialog({ onCreated }: { onCreated: () => void }) {
+  const { address } = useWeb3();
+  const { createSpace } = useSpaceFactory();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [token, setToken] = useState("");
+  const [symbol, setSymbol] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [gridSize, setGridSize] = useState("");
+  const [mintPrice, setMintPrice] = useState("0.05");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleCreate = () => {
-    if (!name || !token || !description || !category || !gridSize) return;
+  const handleCreate = async () => {
+    if (!name || !symbol || !address) return;
+    setLoading(true);
+    setError("");
 
-    const newSpace: Space = {
-      id: name.toLowerCase().replace(/\s+/g, "-"),
-      name,
-      token: `$${token.toUpperCase().replace(/[^A-Z]/g, "")}`,
-      description,
-      totalTiles: parseInt(gridSize),
-      tilesSold: 0,
-      owners: 0,
-      floorPrice: "0.05 ETH",
-      category,
-      status: "upcoming",
-      createdAt: new Date().toISOString().split("T")[0],
-      creatorAddress: "0x...",
-    };
+    try {
+      const spaceId = BigInt(Date.now());
+      const alloc: TokenAllocation = {
+        treasury: address,
+        team: address,
+        stakingRewards: address,
+        liquidityPool: address,
+        earlySupporters: address,
+        platformReserve: address,
+      };
 
-    onCreateSpace(newSpace);
-    setOpen(false);
-    setName("");
-    setToken("");
-    setDescription("");
-    setCategory("");
-    setGridSize("");
+      await createSpace(
+        spaceId,
+        name,
+        symbol.toUpperCase(),
+        parseEther(mintPrice || "0"),
+        0n,
+        alloc,
+      );
+
+      setOpen(false);
+      setName("");
+      setSymbol("");
+      setDescription("");
+      setMintPrice("0.05");
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Transaction failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -134,75 +111,58 @@ function CreateSpaceDialog({
         <DialogHeader>
           <DialogTitle>Create a New Space</DialogTitle>
           <DialogDescription>
-            Launch an autonomous community space on AGORAFI. Configure your grid,
-            token, and community details.
+            Launch an autonomous community space on AGORAFI. This will deploy a
+            governance token and register the space on-chain.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="space-name">Space Name</Label>
+            <Label htmlFor="space-name">Space Name / Token Name</Label>
             <Input
               id="space-name"
-              placeholder="e.g. Romanian Tech Space"
+              placeholder="e.g. Romanian Tech Space Token"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="token-symbol">Governance Token Symbol</Label>
+            <Label htmlFor="token-symbol">Token Symbol</Label>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">$</span>
               <Input
                 id="token-symbol"
                 placeholder="e.g. ROTECH"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
                 className="uppercase"
               />
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description (off-chain)</Label>
             <Textarea
               id="description"
-              placeholder="Describe your community and what this Space is about..."
+              placeholder="Describe your community..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label>Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Grid Size</Label>
-              <Select value={gridSize} onValueChange={setGridSize}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GRID_SIZES.map((size) => (
-                    <SelectItem key={size.value} value={size.value}>
-                      {size.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="mint-price">Tile Mint Price (ETH)</Label>
+            <Input
+              id="mint-price"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.05"
+              value={mintPrice}
+              onChange={(e) => setMintPrice(e.target.value)}
+            />
           </div>
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
@@ -210,9 +170,10 @@ function CreateSpaceDialog({
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={!name || !token || !description || !category || !gridSize}
+            disabled={!name || !symbol || loading}
           >
-            Create Space
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? "Creating..." : "Create Space"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -220,53 +181,48 @@ function CreateSpaceDialog({
   );
 }
 
-function SpaceCard({ space }: { space: Space }) {
+function SpaceCard({ space }: { space: OnChainSpace }) {
+  const tokenShort = space.info.token
+    ? `${space.info.token.slice(0, 6)}...${space.info.token.slice(-4)}`
+    : "—";
+  const creatorShort = space.info.creator
+    ? `${space.info.creator.slice(0, 6)}...${space.info.creator.slice(-4)}`
+    : "—";
+
   return (
     <Card className="group border-border/50 bg-card/50 backdrop-blur-sm transition-all hover:border-cyan/30 hover:shadow-[0_0_30px_rgba(0,240,255,0.08)]">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-base">{space.name}</CardTitle>
-            <span className="text-sm text-cyan font-mono">{space.token}</span>
+            <CardTitle className="text-base">
+              Space #{space.spaceId.toString()}
+            </CardTitle>
+            <span className="text-sm text-cyan font-mono">{tokenShort}</span>
           </div>
-          <StatusBadge status={space.status} />
+          <Badge className="bg-matrix/20 text-matrix border-matrix/30">
+            On-chain
+          </Badge>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
-          {space.description}
-        </p>
         <Separator className="mb-4" />
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-2 gap-4 text-center">
           <div>
             <div className="flex items-center justify-center gap-1 text-sm font-medium">
-              <Grid3X3 className="h-3.5 w-3.5 text-cyan" />
-              {space.tilesSold}/{space.totalTiles}
+              <TrendingUp className="h-3.5 w-3.5 text-matrix" />
+              {formatEther(space.info.mintPrice)} ETH
             </div>
-            <p className="text-xs text-muted-foreground">Tiles</p>
+            <p className="text-xs text-muted-foreground">Mint Price</p>
           </div>
           <div>
             <div className="flex items-center justify-center gap-1 text-sm font-medium">
               <Users className="h-3.5 w-3.5 text-magenta" />
-              {space.owners}
+              {creatorShort}
             </div>
-            <p className="text-xs text-muted-foreground">Owners</p>
-          </div>
-          <div>
-            <div className="flex items-center justify-center gap-1 text-sm font-medium">
-              <TrendingUp className="h-3.5 w-3.5 text-matrix" />
-              {space.floorPrice}
-            </div>
-            <p className="text-xs text-muted-foreground">Floor</p>
+            <p className="text-xs text-muted-foreground">Creator</p>
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <Badge
-            variant="outline"
-            className="text-xs border-border/50 text-muted-foreground"
-          >
-            {space.category}
-          </Badge>
+        <div className="mt-4 flex items-center justify-end">
           <div className="flex gap-2">
             <Button variant="ghost" size="icon-xs">
               <Eye className="h-3.5 w-3.5" />
@@ -283,19 +239,47 @@ function SpaceCard({ space }: { space: Space }) {
 
 function DashboardContent() {
   const { user, logout } = usePrivy();
-  const [mySpaces, setMySpaces] = useState<Space[]>([]);
+  const { address } = useWeb3();
+  const { spaceCount, spaceIdByIndex, getSpaceInfo } = useSpaceFactory();
+  const { totalSupply: tileTotalSupply } = useTile();
+
+  const [allSpaces, setAllSpaces] = useState<OnChainSpace[]>([]);
+  const [totalTiles, setTotalTiles] = useState(0n);
+  const [loading, setLoading] = useState(true);
 
   const walletAddress = user?.wallet?.address;
   const shortAddress = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : "";
 
-  const handleCreateSpace = (space: Space) => {
-    setMySpaces((prev) => [...prev, space]);
-  };
+  const fetchSpaces = useCallback(async () => {
+    setLoading(true);
+    try {
+      const count = await spaceCount();
+      const spaces: OnChainSpace[] = [];
+      for (let i = 0n; i < count; i++) {
+        const id = await spaceIdByIndex(i);
+        const info = await getSpaceInfo(id);
+        spaces.push({ spaceId: id, info });
+      }
+      setAllSpaces(spaces);
 
-  const totalOwned = mySpaces.length;
-  const totalTiles = mySpaces.reduce((sum, s) => sum + s.totalTiles, 0);
+      const tiles = await tileTotalSupply();
+      setTotalTiles(tiles);
+    } catch {
+      // Contract not deployed or no spaces yet — that's fine
+    } finally {
+      setLoading(false);
+    }
+  }, [spaceCount, spaceIdByIndex, getSpaceInfo, tileTotalSupply]);
+
+  useEffect(() => {
+    fetchSpaces();
+  }, [fetchSpaces]);
+
+  const mySpaces = allSpaces.filter(
+    (s) => address && s.info.creator.toLowerCase() === address.toLowerCase(),
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -320,7 +304,7 @@ function DashboardContent() {
         </div>
       </nav>
 
-      {/* Main content — centered */}
+      {/* Main content */}
       <main className="mx-auto max-w-5xl px-6 py-10">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -330,7 +314,7 @@ function DashboardContent() {
               Manage your Spaces and community economies.
             </p>
           </div>
-          <CreateSpaceDialog onCreateSpace={handleCreateSpace} />
+          <CreateSpaceDialog onCreated={fetchSpaces} />
         </div>
 
         {/* Overview stats */}
@@ -338,23 +322,23 @@ function DashboardContent() {
           <Card className="border-border/50 bg-card/50">
             <CardContent className="flex flex-col items-center py-6">
               <LayoutDashboard className="mb-2 h-5 w-5 text-cyan" />
-              <span className="text-2xl font-bold">{totalOwned}</span>
+              <span className="text-2xl font-bold">{mySpaces.length}</span>
               <span className="text-xs text-muted-foreground">My Spaces</span>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/50">
             <CardContent className="flex flex-col items-center py-6">
               <Grid3X3 className="mb-2 h-5 w-5 text-magenta" />
-              <span className="text-2xl font-bold">{totalTiles}</span>
+              <span className="text-2xl font-bold">
+                {totalTiles.toString()}
+              </span>
               <span className="text-xs text-muted-foreground">Total Tiles</span>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/50">
             <CardContent className="flex flex-col items-center py-6">
               <Globe className="mb-2 h-5 w-5 text-matrix" />
-              <span className="text-2xl font-bold">
-                {PLATFORM_SPACES.length}
-              </span>
+              <span className="text-2xl font-bold">{allSpaces.length}</span>
               <span className="text-xs text-muted-foreground">
                 Platform Spaces
               </span>
@@ -380,7 +364,14 @@ function DashboardContent() {
 
           {/* My Spaces tab */}
           <TabsContent value="my-spaces">
-            {mySpaces.length === 0 ? (
+            {loading ? (
+              <Card className="border-border/50 bg-card/50">
+                <CardContent className="flex flex-col items-center py-16">
+                  <Loader2 className="mb-4 h-8 w-8 animate-spin text-cyan" />
+                  <CardDescription>Loading spaces from chain...</CardDescription>
+                </CardContent>
+              </Card>
+            ) : mySpaces.length === 0 ? (
               <Card className="border-border/50 bg-card/50 border-dashed">
                 <CardContent className="flex flex-col items-center py-16">
                   <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-cyan/10">
@@ -393,18 +384,17 @@ function DashboardContent() {
                     Create your first Space to launch an autonomous community
                     with its own economy, governance, and tile grid.
                   </CardDescription>
-                  <CreateSpaceDialog onCreateSpace={handleCreateSpace} />
+                  <CreateSpaceDialog onCreated={fetchSpaces} />
                 </CardContent>
               </Card>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {mySpaces.map((space) => (
-                  <SpaceCard key={space.id} space={space} />
+                  <SpaceCard key={space.spaceId.toString()} space={space} />
                 ))}
-                {/* Create new card */}
                 <Card className="flex items-center justify-center border-dashed border-border/50 bg-card/30 min-h-[240px] transition-all hover:border-cyan/30">
                   <CardContent className="flex flex-col items-center py-8">
-                    <CreateSpaceDialog onCreateSpace={handleCreateSpace} />
+                    <CreateSpaceDialog onCreated={fetchSpaces} />
                   </CardContent>
                 </Card>
               </div>
@@ -413,11 +403,31 @@ function DashboardContent() {
 
           {/* Explore tab */}
           <TabsContent value="explore">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {PLATFORM_SPACES.map((space) => (
-                <SpaceCard key={space.id} space={space} />
-              ))}
-            </div>
+            {loading ? (
+              <Card className="border-border/50 bg-card/50">
+                <CardContent className="flex flex-col items-center py-16">
+                  <Loader2 className="mb-4 h-8 w-8 animate-spin text-cyan" />
+                  <CardDescription>Loading spaces from chain...</CardDescription>
+                </CardContent>
+              </Card>
+            ) : allSpaces.length === 0 ? (
+              <Card className="border-border/50 bg-card/50 border-dashed">
+                <CardContent className="flex flex-col items-center py-16">
+                  <CardTitle className="mb-2 text-lg">
+                    No Spaces Yet
+                  </CardTitle>
+                  <CardDescription className="text-center max-w-sm">
+                    Be the first to create a Space on the platform.
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {allSpaces.map((space) => (
+                  <SpaceCard key={space.spaceId.toString()} space={space} />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>

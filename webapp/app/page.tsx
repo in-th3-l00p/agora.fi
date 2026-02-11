@@ -2,12 +2,17 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { formatEther } from "viem";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { PLATFORM_SPACES, FEATURES, STATS } from "@/lib/mock-data";
+import { FEATURES } from "@/lib/mock-data";
+import { useWeb3 } from "@/hooks/useWeb3";
+import { useSpaceFactory } from "@/hooks/useSpaceFactory";
+import { useTile } from "@/hooks/useTile";
+import type { SpaceInfo } from "@/lib/web3/types";
 import {
   Blocks,
   Wallet,
@@ -16,7 +21,6 @@ import {
   Newspaper,
   ArrowRightLeft,
   Users,
-  Grid3X3,
   TrendingUp,
   ArrowRight,
   ChevronDown,
@@ -31,27 +35,42 @@ const iconMap = {
   ArrowRightLeft,
 } as const;
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "live")
-    return (
-      <Badge className="bg-matrix/20 text-matrix border-matrix/30">Live</Badge>
-    );
-  if (status === "launching")
-    return (
-      <Badge className="bg-laser/20 text-laser border-laser/30">
-        Launching
-      </Badge>
-    );
-  return (
-    <Badge className="bg-quantum/20 text-quantum border-quantum/30">
-      Upcoming
-    </Badge>
-  );
+interface OnChainSpace {
+  spaceId: bigint;
+  info: SpaceInfo;
 }
 
 export default function Home() {
   const { login, ready, authenticated } = usePrivy();
   const router = useRouter();
+  const { spaceCount, spaceIdByIndex, getSpaceInfo } = useSpaceFactory();
+  const { totalSupply: tileTotalSupply } = useTile();
+  const { address } = useWeb3();
+
+  const [spaces, setSpaces] = useState<OnChainSpace[]>([]);
+  const [stats, setStats] = useState({ spaces: "0", tiles: "0" });
+
+  const fetchData = useCallback(async () => {
+    try {
+      const count = await spaceCount();
+      const fetched: OnChainSpace[] = [];
+      for (let i = 0n; i < count; i++) {
+        const id = await spaceIdByIndex(i);
+        const info = await getSpaceInfo(id);
+        fetched.push({ spaceId: id, info });
+      }
+      setSpaces(fetched);
+
+      const tiles = await tileTotalSupply();
+      setStats({ spaces: count.toString(), tiles: tiles.toString() });
+    } catch {
+      // Contracts not deployed yet
+    }
+  }, [spaceCount, spaceIdByIndex, getSpaceInfo, tileTotalSupply]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     if (ready && authenticated) {
@@ -131,17 +150,31 @@ export default function Home() {
           </div>
 
           {/* Stats row */}
-          <div className="mt-8 grid grid-cols-2 gap-8 sm:grid-cols-4">
-            {STATS.map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-cyan sm:text-3xl">
-                  {stat.value}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {stat.label}
-                </span>
-              </div>
-            ))}
+          <div className="mt-8 grid grid-cols-2 gap-8 sm:grid-cols-3">
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold text-cyan sm:text-3xl">
+                {stats.spaces}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Spaces Created
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold text-cyan sm:text-3xl">
+                {stats.tiles}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Tiles Minted
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold text-cyan sm:text-3xl">
+                {address ? "Connected" : "---"}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Wallet Status
+              </span>
+            </div>
           </div>
         </div>
 
@@ -169,61 +202,66 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {PLATFORM_SPACES.map((space) => (
-              <Card
-                key={space.id}
-                className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all hover:border-cyan/30 hover:shadow-[0_0_30px_rgba(0,240,255,0.08)]"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{space.name}</CardTitle>
-                      <span className="text-sm text-cyan font-mono">
-                        {space.token}
-                      </span>
-                    </div>
-                    <StatusBadge status={space.status} />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
-                    {space.description}
-                  </p>
-                  <Separator className="mb-4" />
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="flex items-center justify-center gap-1 text-sm font-medium">
-                        <Grid3X3 className="h-3.5 w-3.5 text-cyan" />
-                        {space.tilesSold}/{space.totalTiles}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Tiles</p>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-center gap-1 text-sm font-medium">
-                        <Users className="h-3.5 w-3.5 text-magenta" />
-                        {space.owners}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Owners</p>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-center gap-1 text-sm font-medium">
-                        <TrendingUp className="h-3.5 w-3.5 text-matrix" />
-                        {space.floorPrice}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Floor</p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="mt-4 text-xs border-border/50 text-muted-foreground"
+          {spaces.length === 0 ? (
+            <Card className="border-border/50 bg-card/50 border-dashed">
+              <CardContent className="flex flex-col items-center py-16">
+                <CardTitle className="mb-2 text-lg">
+                  No Spaces Yet
+                </CardTitle>
+                <p className="text-sm text-muted-foreground text-center max-w-sm">
+                  Connect your wallet and create the first Space on the platform.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {spaces.map((space) => {
+                const tokenShort = `${space.info.token.slice(0, 6)}...${space.info.token.slice(-4)}`;
+                const creatorShort = `${space.info.creator.slice(0, 6)}...${space.info.creator.slice(-4)}`;
+                return (
+                  <Card
+                    key={space.spaceId.toString()}
+                    className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all hover:border-cyan/30 hover:shadow-[0_0_30px_rgba(0,240,255,0.08)]"
                   >
-                    {space.category}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">
+                            Space #{space.spaceId.toString()}
+                          </CardTitle>
+                          <span className="text-sm text-cyan font-mono">
+                            {tokenShort}
+                          </span>
+                        </div>
+                        <Badge className="bg-matrix/20 text-matrix border-matrix/30">
+                          On-chain
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Separator className="mb-4" />
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                          <div className="flex items-center justify-center gap-1 text-sm font-medium">
+                            <TrendingUp className="h-3.5 w-3.5 text-matrix" />
+                            {formatEther(space.info.mintPrice)} ETH
+                          </div>
+                          <p className="text-xs text-muted-foreground">Mint Price</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-center gap-1 text-sm font-medium">
+                            <Users className="h-3.5 w-3.5 text-magenta" />
+                            {creatorShort}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Creator</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
