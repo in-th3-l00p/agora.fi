@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: spaces_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/spaces_service
+      JWT_SECRET: dev-secret-change-in-production
+      PORT: 3000
+    ports:
+      - "4000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - /app/node_modules
+
+volumes:
+  pgdata:
