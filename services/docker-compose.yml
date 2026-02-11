@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  spaces-service:
+    build:
+      context: ./spaces-service
+      dockerfile: Dockerfile.dev
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/spaces_service
+      JWT_SECRET: dev-secret-change-in-production
+      PORT: 3000
+    ports:
+      - "4000:3000"
+    volumes:
+      - ./spaces-service/src:/app/src
+      - ./spaces-service/package.json:/app/package.json
+      - /app/node_modules
+
+  marketplace-service:
+    build:
+      context: ./marketplace-service
+      dockerfile: Dockerfile.dev
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/marketplace_service
+      JWT_SECRET: dev-secret-change-in-production
+      PORT: 3000
+    ports:
+      - "4001:3000"
+    volumes:
+      - ./marketplace-service/src:/app/src
+      - ./marketplace-service/package.json:/app/package.json
+      - /app/node_modules
+
+volumes:
+  pgdata:

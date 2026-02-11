@@ -1,0 +1,11 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Run migrations then start dev server with file watching
+CMD sh -c "npm run migrate && npm run dev"
