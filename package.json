@@ -2,6 +2,7 @@
   "private": true,
   "workspaces": [
     "webapp",
-    "lib/web3"
+    "lib/web3",
+    "lib/backend"
   ]
 }

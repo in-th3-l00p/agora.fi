@@ -2,6 +2,7 @@
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { Web3Provider } from "@/components/Web3Provider";
+import { BackendProvider } from "@/components/BackendProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +14,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <Web3Provider>{children}</Web3Provider>
+      <Web3Provider>
+        <BackendProvider>{children}</BackendProvider>
+      </Web3Provider>
     </PrivyProvider>
   );
 }
