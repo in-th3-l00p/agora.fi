@@ -1,0 +1,12 @@
+{
+  "name": "@agora-fi/web3",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vvv"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.4.0"
+  }
+}
