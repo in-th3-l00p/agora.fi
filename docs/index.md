@@ -6,7 +6,7 @@
 
 ### [web3 architecture](./blockchain/index.md)
   * [tile NFT (ERC-721)](./blockchain/tile-nft.md)
-  * [token-bound accounts (ERC-6551)](./blockchain/token-bound-accounts.md)
+  * [tile wallets](./blockchain/tile-wallet.md)
   * [vaults (ERC-4626)](./blockchain/vaults.md)
   * [rentals (ERC-4907)](./blockchain/rentals.md)
   * [royalties (ERC-2981)](./blockchain/royalties.md)

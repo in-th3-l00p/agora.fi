@@ -18,7 +18,7 @@ Tiles can be rented out for a fixed period, granting temporary usage rights whil
 ```
 1. Owner sets rental terms (price, duration)
 2. Tenant calls setUser() and pays rental fee
-3. Rental fee flows to tile's token-bound account
+3. Rental fee flows to tile's wallet
 4. Tenant gets usage rights for the agreed period
 5. On expiry, user role auto-clears — no action needed
 ```
@@ -27,7 +27,7 @@ Tiles can be rented out for a fixed period, granting temporary usage rights whil
 
 - **Automatic expiration** — the `expires` timestamp is on-chain. After expiry, `userOf()` returns `address(0)`. No transaction needed to reclaim the tile.
 - **Non-custodial** — the owner never loses the NFT. Rental only grants the `user` role.
-- **Composable income** — rental payments land in the token-bound account and can be staked into vaults for additional yield.
+- **Composable income** — rental payments land in the tile wallet and can be staked into vaults for additional yield.
 
 ## pricing
 

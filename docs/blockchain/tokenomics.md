@@ -8,7 +8,7 @@ Each tile generates revenue from three independent sources:
 
 ### 1. rental income
 
-Tenants pay to use a tile for a fixed period. Payments flow directly into the tile's token-bound account.
+Tenants pay to use a tile for a fixed period. Payments flow directly into the tile's wallet.
 
 - Typical rate: ~$300/month
 - Occupancy assumption: ~8 months/year
@@ -18,7 +18,7 @@ See [rentals](./rentals.md) for the technical mechanism.
 
 ### 2. vault yield (staking)
 
-Tokens held in the tile's TBA can be deposited into ERC-4626 vaults to earn yield.
+Tokens held in the tile's wallet can be deposited into ERC-4626 vaults to earn yield.
 
 - Typical principal: ~$3,000 staked
 - Typical APY: 15–45% depending on strategy
@@ -28,7 +28,7 @@ See [vaults](./vaults.md) for the technical mechanism.
 
 ### 3. royalties
 
-Every secondary sale of the tile generates a 5% royalty paid to the tile's TBA.
+Every secondary sale of the tile generates a 5% royalty paid to the tile's wallet.
 
 - Assumes ~2 resales/year in active markets
 - At average sale price of $3,000: **~$300/year**
@@ -53,7 +53,7 @@ All income is passive after initial configuration.
 When a tile is sold, its price reflects the sum of:
 
 1. **NFT floor value** — base price for the map position and space membership.
-2. **TBA balance** — liquid tokens held in the wallet.
+2. **Wallet balance** — liquid tokens held in the tile wallet.
 3. **Vault position** — staked principal + accrued yield.
 4. **Rental contract value** — present value of remaining rental income.
 5. **Royalty stream** — expected future royalty cashflow.

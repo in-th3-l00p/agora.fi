@@ -10,7 +10,7 @@ A tile is a coordinate in a themed virtual space (e.g. "Romanian Tech Space"). U
 |----------|-------------|
 | Token standard | ERC-721 |
 | Identity | Unique tile ID + space coordinates |
-| Bound account | ERC-6551 smart wallet (created on mint) |
+| Bound wallet | Tile wallet (created on mint) |
 | Transferability | Fully transferable; account transfers with it |
 
 ## minting
@@ -18,17 +18,17 @@ A tile is a coordinate in a themed virtual space (e.g. "Romanian Tech Space"). U
 When a tile is minted:
 
 1. An ERC-721 token is created and assigned to the buyer.
-2. An ERC-6551 token-bound account is deployed for that token.
+2. A tile wallet smart contract is deployed for that token.
 3. The tile appears on the isometric map at its designated coordinates.
 
-The token-bound account is deterministically derived from the NFT's contract address and token ID, so it is inseparable from the tile.
+The tile wallet address is deterministically derived from the NFT's contract address and token ID, so it is inseparable from the tile.
 
 ## what transfers with the NFT
 
 Selling or transferring the tile NFT atomically transfers ownership of:
 
 - The NFT itself (map position, metadata, visual identity)
-- The token-bound account and **all** assets it holds
+- The tile wallet and **all** assets it holds
 - Active vault positions and accrued yield
 - Active rental agreements and future rental income
 - Royalty configuration and future royalty revenue
