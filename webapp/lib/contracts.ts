@@ -1,6 +1,9 @@
 // Contract addresses and chain config.
 // Resolution: env vars > deployments/local.json > defaults (local anvil)
 
+import fs from "fs";
+import path from "path";
+
 interface DeploymentArtifact {
   chainId: number;
   rpcUrl: string;
@@ -10,8 +13,9 @@ interface DeploymentArtifact {
 
 function loadLocalDeployment(): DeploymentArtifact | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("../../deployments/local.json") as DeploymentArtifact;
+    const filePath = path.resolve(process.cwd(), "..", "deployments", "local.json");
+    const raw = fs.readFileSync(filePath, "utf-8");
+    return JSON.parse(raw) as DeploymentArtifact;
   } catch {
     return null;
   }
